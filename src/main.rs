@@ -1,6 +1,6 @@
 mod unreal;
 
-use clap::{ Command };
+use clap::Command;
 use unreal::clean;
 
 fn cli() -> Command {

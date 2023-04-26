@@ -1,7 +1,8 @@
 mod unreal;
+mod utils;
 
 use clap::Command;
-use unreal::clean;
+use unreal::*;
 
 fn cli() -> Command {
     Command::new("zrrp")
@@ -11,6 +12,9 @@ fn cli() -> Command {
         .allow_external_subcommands(true)
         .subcommand(
             Command::new("clean").about("Cleans up unreal projects under the current directory"),
+        )
+        .subcommand(
+            Command::new("clean-ddc").about("Cleans up the DerivedDataCache folder inside unreal engine"),
         )
 }
 
@@ -22,6 +26,10 @@ fn main() {
             println!("Cleaning up");
             clean();
         }
-        _ => unreachable!(),
+        Some(("clean-ddc", _)) => {
+            println!("Cleaning DDC");
+            clean_ddc();
+        }
+        _ => unreachable!()
     }
 }

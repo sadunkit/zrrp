@@ -1,34 +1,24 @@
 use std::env;
-use std::fs;
-use std::path::Path;
 use std::process;
+
+use crate::utils::remove_unwanted_directories;
 
 pub fn clean() {
     let current_dir = env::current_dir().expect("Failed to get the current directory");
+    let unwanted_dirs = ["Saved", "Intermediate", "Binaries", "DerivedDataCache"];
 
-    if let Err(e) = remove_unwanted_directories(&current_dir) {
+    if let Err(e) = remove_unwanted_directories(&current_dir, &unwanted_dirs) {
         eprintln!("Error: {}", e);
         process::exit(1);
     }
 }
 
-fn remove_unwanted_directories<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
-    let unwanted_dirs = ["Saved", "Intermediate", "Binaries"];
+pub fn clean_ddc() {
+    let current_dir = env::current_dir().expect("Failed to get the current directory");
+    let unwanted_dirs = ["DerivedDataCache"];
 
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let path = entry.path();
-        let dir_name = path.file_name().and_then(|n| n.to_str());
-
-        if entry.file_type()?.is_dir() {
-            if dir_name.map(|n| unwanted_dirs.contains(&n)).unwrap_or(false) {
-                println!("Removing {}", path.display());
-                fs::remove_dir_all(&path)?;
-            } else {
-                remove_unwanted_directories(&path)?;
-            }
-        }
+    if let Err(e) = remove_unwanted_directories(&current_dir, &unwanted_dirs) {
+        eprintln!("Error: {}", e);
+        process::exit(1);
     }
-
-    Ok(())
 }

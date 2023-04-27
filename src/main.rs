@@ -23,9 +23,7 @@ fn run_p4_info() -> Result<String, String> {
     use std::process::Command;
 
     let output = Command::new("p4")
-        .args(&[
-            "info",
-            ])
+        .args(&["info",])
         .output()
         .map_err(|e| format!("Failed to run p4 command: {}", e))?;
 

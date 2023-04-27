@@ -1,24 +1,35 @@
 use std::env;
 use std::process;
 
-use crate::utils::remove_unwanted_directories;
+use crate::utils::*;
 
-pub fn clean() {
+fn clean_internal(unwanted_dirs: &[&str]) {
     let current_dir = env::current_dir().expect("Failed to get the current directory");
-    let unwanted_dirs = ["Saved", "Intermediate", "Binaries", "DerivedDataCache"];
 
-    if let Err(e) = remove_unwanted_directories(&current_dir, &unwanted_dirs) {
-        eprintln!("Error: {}", e);
-        process::exit(1);
+    if !has_uproject_file(&current_dir) {
+        if !ask_yes_no_question("This folder doesn't have .uproject file Continue? ", 4) {
+            println!("Exiting...");
+            process::exit(0);
+        }
+    }
+
+    match remove_unwanted_directories(&current_dir, &unwanted_dirs) {
+        Ok(_) => println!("Successfully removed directories"),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            process::exit(1);
+        }
     }
 }
 
+pub fn clean() {
+    let unwanted_dirs = ["Saved", "Intermediate", "Binaries", "DerivedDataCache"];
+
+    clean_internal( &unwanted_dirs)
+}
+
 pub fn clean_ddc() {
-    let current_dir = env::current_dir().expect("Failed to get the current directory");
     let unwanted_dirs = ["DerivedDataCache"];
 
-    if let Err(e) = remove_unwanted_directories(&current_dir, &unwanted_dirs) {
-        eprintln!("Error: {}", e);
-        process::exit(1);
-    }
+    clean_internal(&unwanted_dirs)
 }

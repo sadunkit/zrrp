@@ -93,7 +93,7 @@ fn main() {
             clean_ddc();
         }
         Some(("pua", _)) => {
-            count_uproperty_config("/Users/btcyz120/Perforce/sadun_mac_aaron_main/Source/LyraGame");
+            count_uproperty_config("TODO");
         }
         Some(("p4-info", _)) => {
             match run_p4_info() {

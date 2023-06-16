@@ -1,8 +1,9 @@
 mod unreal;
 mod utils;
 
-use clap::Command;
+use clap::{Command, ValueEnum};
 use unreal::*;
+use log::{self, Metadata, Level, Record};
 
 fn cli() -> Command {
     Command::new("zrrp")
@@ -16,6 +17,28 @@ fn cli() -> Command {
         .subcommand(
             Command::new("clean-ddc").about("Cleans up the DerivedDataCache folder inside unreal engine"),
         )
+        .subcommand(
+            Command::new("pua").about("Counts UPROPERTY(Config) instances in the given path"),
+        )
+}
+
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[arg(value_enum)]
+    mode: Mode,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum Mode {
+    /// Run swiftly
+    Unreal,
+    /// Crawl slowly but steadily
+    ///
+    /// This paragraph is ignored because there is no long help text for possible values.
+    Zrrp,
 }
 
 fn run_p4_info() -> Result<String, String> {
@@ -38,8 +61,27 @@ fn run_p4_info() -> Result<String, String> {
     }
 }
 
+struct MyLogger;
+
+impl log::Log for MyLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= Level::Debug
+    }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            println!("{} - {}", record.level(), record.args());
+        }
+    }
+    fn flush(&self) {}
+}
+
 fn main() {
     let matches = cli().get_matches();
+
+    log::set_logger(&MyLogger).unwrap();
+
+    log::set_max_level(log::LevelFilter::Debug);
 
     match matches.subcommand() {
         Some(("clean", _)) => {
@@ -49,6 +91,9 @@ fn main() {
         Some(("clean-ddc", _)) => {
             println!("Cleaning DDC");
             clean_ddc();
+        }
+        Some(("pua", _)) => {
+            count_uproperty_config("/Users/btcyz120/Perforce/sadun_mac_aaron_main/Source/LyraGame");
         }
         Some(("p4-info", _)) => {
             match run_p4_info() {

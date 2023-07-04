@@ -6,7 +6,7 @@ use crate::utils::*;
 fn clean_internal(unwanted_dirs: &[&str]) {
     let current_dir = env::current_dir().expect("Failed to get the current directory");
 
-    if !has_uproject_file(&current_dir) {
+    if !directory_has_file(&current_dir, "uproject") {
         if !ask_yes_no_question("This folder doesn't have .uproject file Continue? ", 4) {
             println!("Exiting...");
             process::exit(0);

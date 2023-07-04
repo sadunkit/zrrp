@@ -3,12 +3,12 @@ use std::{fs, io};
 use std::path::Path;
 use std::error::Error;
 
-pub fn has_uproject_file<P: AsRef<Path>>(path: P) -> bool {
+pub fn directory_has_file<P: AsRef<Path>>(path: P, ext: &str) -> bool {
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries {
             if let Ok(entry) = entry {
                 let path = entry.path();
-                if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("uproject") {
+                if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some(ext) {
                     return true;
                 }
             }

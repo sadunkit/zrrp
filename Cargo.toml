@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.2.2", features = ["derive"] }
-log = "0.4.19"
-regex = "1.8.4"
-walkdir = "2.3.3"
+clap = { version = "4.4.6", features = ["derive"] }
+log = "0.4.20"
+regex = "1.9.5"
+walkdir = "2.4.0"

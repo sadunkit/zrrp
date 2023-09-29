@@ -36,6 +36,24 @@ pub fn remove_unwanted_directories(path: &Path, unwanted_dirs: &[&str]) -> Resul
     Ok(())
 }
 
+pub fn remove_unwanted_files(path: &Path, unwanted_extensions: &[&str]) -> Result<(), Box<dyn Error>> {
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if entry.file_type()?.is_dir() {
+            remove_unwanted_files(&path, unwanted_extensions)?;
+        } else if let Some(extension) = path.extension().and_then(|e| e.to_str()) {
+            if unwanted_extensions.contains(&extension) {
+                println!("Removing {}", path.display());
+                fs::remove_file(&path)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 pub fn ask_yes_no_question(prompt: &str, max_retries: usize) -> bool {
     println!("{} (y/n)", prompt);
     io::stdout().flush().unwrap();

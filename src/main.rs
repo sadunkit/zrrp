@@ -25,7 +25,8 @@ fn cli() -> Command {
                 .arg(clap::Arg::new("files")
                     .long("files")
                     .short('f')
-                    .action(clap::ArgAction::Append))
+                    .action(clap::ArgAction::Append)
+                )
         )
 }
 
@@ -63,19 +64,23 @@ fn main() {
         Some(("nuke", args)) => {
             let current_dir = std::env::current_dir().expect("Failed to get the current directory");
 
-            assert!(args.contains_id("files"));
-
-            let files = args.get_many::<String>("files").unwrap_or_default();
-            println!("Nuking {}", current_dir.display());
-
-            let files: Vec<&str> = files.map(|s| s.as_str()).collect::<Vec<_>>();
-            match utils::remove_unwanted_files(&current_dir, &files) {
-                Ok(_) => println!("Successfully removed files"),
-                Err(e) => {
-                    eprintln!("Error: {}", e);
+            match args.try_get_many::<String>("files").unwrap(){
+                Some(files) => {
+                    let file_names: Vec<&str> = files.map(|s| s.as_str()).collect::<Vec<_>>();
+                    println!("Nuking {} for files {}", current_dir.display(), file_names.join(", "));
+                    match utils::remove_unwanted_files(&current_dir, &file_names) {
+                        Ok(_) => println!("Successfully removed files"),
+                        Err(e) => {
+                            eprintln!("Error: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+                None => {
+                    eprintln!("Error: file extensions are required 'zrrp nuke -f ext -f ext2'", );
                     std::process::exit(1);
                 }
-            };
+            }
         }
         Some(("clean-ddc", _)) => {
             println!("Cleaning DDC");

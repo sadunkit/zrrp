@@ -87,7 +87,10 @@ fn main() {
             unreal::clean_ddc();
         }
         Some(("pua", _)) => {
-            unreal::count_uproperty_config("TODO");
+            let dir = std::env::current_dir().unwrap();
+            println!("Counting UPROPERTY(Config) instances in {}", dir.display());
+            let path = dir.to_str().unwrap_or_else(|| panic!("Failed to convert {:?} to string", dir));
+            unreal::count_uproperty_config(path);
         }
         Some(("p4-info", _)) => {
             match perforce::run_p4_info() {

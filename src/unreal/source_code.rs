@@ -1,7 +1,6 @@
 use std::fs;
 use std::collections::HashMap;
 use walkdir::WalkDir;
-use regex::Regex;
 use std::path::Path;
 use log::debug;
 
@@ -14,7 +13,6 @@ pub struct FileInfo {
 pub type FileStats = HashMap<String, FileInfo>;
 
 pub fn count_uproperty_config(path: &str) -> FileStats {
-    let re_uproperty = Regex::new(r"UPROPERTY\([^\)]*Config[^\)]*\)").unwrap();
     let mut counts: FileStats = HashMap::new();
 
     for entry in WalkDir::new(path) {
@@ -25,7 +23,8 @@ pub fn count_uproperty_config(path: &str) -> FileStats {
                 let mut line_numbers = Vec::new();
                 let lines: Vec<&str> = contents.split('\n').collect();
                 for (i, line) in lines.iter().enumerate() {
-                    if re_uproperty.is_match(line) {
+                    let lower = line.to_lowercase();
+                    if lower.contains("uproperty") && lower.contains("config") {
                         line_numbers.push(i + 1);
                         debug!("Found UPROPERTY(Config) at line {}", i + 1);
                     }

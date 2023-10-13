@@ -1,5 +1,6 @@
 use std::env;
 use std::process;
+use log::error;
 
 use crate::utils::*;
 
@@ -16,7 +17,7 @@ fn clean_internal(unwanted_dirs: &[&str]) {
     match remove_unwanted_directories(&current_dir, &unwanted_dirs) {
         Ok(_) => println!("Successfully removed directories"),
         Err(e) => {
-            eprintln!("Error: {}", e);
+            error!("Error: {}", e);
             process::exit(1);
         }
     }

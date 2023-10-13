@@ -18,7 +18,9 @@ fn cli() -> Command {
             Command::new("clean-ddc").about("Cleans up the DerivedDataCache folder inside unreal engine"),
         )
         .subcommand(
-            Command::new("pua").about("Counts UPROPERTY(Config) instances in the given path"),
+            Command::new("pua").about("Counts UPROPERTY(Config) instances in the given path")
+                .arg(clap::Arg::new("folder"))
+                .allow_missing_positional(true),
         )
         .subcommand(
             Command::new("nuke").about("Nukes the current directory for unwanted files")
@@ -31,6 +33,7 @@ fn cli() -> Command {
 }
 
 use clap::Parser;
+use log::error;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -71,7 +74,7 @@ fn main() {
                     match utils::remove_unwanted_files(&current_dir, &file_names) {
                         Ok(_) => println!("Successfully removed files"),
                         Err(e) => {
-                            eprintln!("Error: {}", e);
+                            error!("Error: {}", e);
                             std::process::exit(1);
                         }
                     };
@@ -86,16 +89,27 @@ fn main() {
             println!("Cleaning DDC");
             unreal::clean_ddc();
         }
-        Some(("pua", _)) => {
-            let dir = std::env::current_dir().unwrap();
-            println!("Counting UPROPERTY(Config) instances in {}", dir.display());
-            let path = dir.to_str().unwrap_or_else(|| panic!("Failed to convert {:?} to string", dir));
-            unreal::count_uproperty_config(path);
+        Some(("pua", args)) => {
+            match std::env::current_dir() {
+                Ok(dir) => if let Some(path) = dir.to_str() {
+
+                    let mut final_path = path.to_string();
+
+                    if let Ok(arg) = args.try_get_one::<String>("folder") {
+                        if let Some(folder) = arg {
+                           final_path.push_str(format!("/{}", folder).as_str());
+                        }
+                    }
+                    println!("Counting UPROPERTY(Config) instances in {}", final_path);
+                    unreal::count_uproperty_config(final_path.as_str());
+                },
+                Err(e) => error!("Error: {}", e)
+            }
         }
         Some(("p4-info", _)) => {
             match perforce::run_p4_info() {
                 Ok(output) => println!("Output:\n{}", output),
-                Err(e) => eprintln!("Error: {}", e),
+                Err(e) => error!("Error: {}", e),
             }
         }
         _ => unreachable!()

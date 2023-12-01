@@ -2,58 +2,12 @@ mod unreal;
 mod utils;
 mod perforce;
 mod app_logger;
-
-use clap::{Command, ValueEnum};
-
-fn cli() -> Command {
-    Command::new("zrrp")
-        .about("A developers best friend")
-        .subcommand_required(true)
-        .arg_required_else_help(true)
-        .allow_external_subcommands(true)
-        .subcommand(
-            Command::new("clean").about("Cleans up unreal projects under the current directory"),
-        )
-        .subcommand(
-            Command::new("clean-ddc").about("Cleans up the DerivedDataCache folder inside unreal engine"),
-        )
-        .subcommand(
-            Command::new("pua").about("Counts UPROPERTY(Config) instances in the given path")
-                .arg(clap::Arg::new("folder"))
-                .allow_missing_positional(true),
-        )
-        .subcommand(
-            Command::new("nuke").about("Nukes the current directory for unwanted files")
-                .arg(clap::Arg::new("files")
-                    .long("files")
-                    .short('f')
-                    .action(clap::ArgAction::Append)
-                )
-        )
-}
-
-use clap::Parser;
-use log::error;
-
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-struct Cli {
-    #[arg(value_enum)]
-    mode: Mode,
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum Mode {
-    /// Run swiftly
-    Unreal,
-    /// Crawl slowly but steadily
-    ///
-    /// This paragraph is ignored because there is no long help text for possible values.
-    Zrrp,
-}
+mod cli;
 
 fn main() {
-    let matches = cli().get_matches();
+    use log::error;
+
+    let matches = cli::create_cli().get_matches();
 
     log::set_logger(&app_logger::AppLogger).unwrap();
 
@@ -101,7 +55,10 @@ fn main() {
                         }
                     }
                     println!("Counting UPROPERTY(Config) instances in {}", final_path);
-                    unreal::count_uproperty_config(final_path.as_str());
+                    let _file_stats = unreal::count_uproperty_config(final_path.as_str());
+
+                    // TODO: Record the fileStats to a file or show it through a nice ui
+                    // working with an editor could prove useful (i.e. Rider for Unreal)
                 },
                 Err(e) => error!("Error: {}", e)
             }
@@ -112,6 +69,6 @@ fn main() {
                 Err(e) => error!("Error: {}", e),
             }
         }
-        _ => unreachable!()
+        _ => {}
     }
 }

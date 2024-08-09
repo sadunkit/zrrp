@@ -24,7 +24,7 @@ fn clean_internal(unwanted_dirs: &[&str]) {
 }
 
 pub fn clean() {
-    let unwanted_dirs = ["Saved", "Intermediate", "Binaries", "DerivedDataCache"];
+    let unwanted_dirs = ["Saved", "Intermediate", "Binaries", "DerivedDataCache", ".idea", ".vs"];
 
     clean_internal( &unwanted_dirs)
 }

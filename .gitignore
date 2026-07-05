@@ -1,6 +1,5 @@
-/target
 .DS_Store
 .idea
 
-**/.zig-cache
-**/zig-out
+.zig-cache/
+zig-out/

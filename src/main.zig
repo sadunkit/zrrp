@@ -1,7 +1,7 @@
 const std = @import("std");
 const Io = std.Io;
 
-const zigport = @import("zigport");
+const zrrp = @import("zrrp");
 
 pub fn main(init: std.process.Init) !void {
     const arena = init.arena.allocator();
@@ -14,7 +14,7 @@ pub fn main(init: std.process.Init) !void {
 
     const command = args[1];
     if (std.mem.eql(u8, command, "clean")) {
-        try zigport.unreal.clean(init.io, init.gpa);
+        try zrrp.unreal.clean(init.io, init.gpa);
     } else {
         printUsage(init.io);
         std.process.exit(2);
@@ -31,7 +31,7 @@ fn printUsage(io: Io) void {
         \\
         \\Commands:
         \\  clean    Remove Unreal build artifact directories
-        \\           (Saved, Intermediate, Binaries, DerivedDataCache, .idea, .vs)
+        \\           (Saved, Intermediate, Binaries, DerivedDataCache, .idea, .vs, .xcworkspace)
         \\
     , .{}) catch {};
     stdout.flush() catch {};

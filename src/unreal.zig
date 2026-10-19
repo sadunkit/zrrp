@@ -5,6 +5,9 @@ const utils = @import("utils.zig");
 
 const intermediate_dirs: []const []const u8 = &.{"Intermediate"};
 const other_dirs: []const []const u8 = &.{ "Saved", "Binaries", "DerivedDataCache", ".idea", ".vs", ".xcworkspace" };
+// Relative to the project root. Marketplace plugins ship prebuilt binaries
+// that no local build regenerates, so they must never be cleaned.
+const excluded_paths: []const []const u8 = &.{"Plugins/Marketplace"};
 
 pub fn clean(io: Io, gpa: std.mem.Allocator) !void {
     var printer = utils.Printer.init(io);
@@ -41,6 +44,21 @@ pub fn clean(io: Io, gpa: std.mem.Allocator) !void {
     }
 
     printer.print("Successfully removed directories\n", .{});
+    reportExcluded(io, &printer);
+}
+
+fn reportExcluded(io: Io, printer: *utils.Printer) void {
+    for (excluded_paths) |rel| {
+        var dir = Io.Dir.cwd().openDir(io, rel, .{ .iterate = true }) catch continue;
+        defer dir.close(io);
+
+        printer.print("Not touched ({s}):\n", .{rel});
+        var it = dir.iterate();
+        while (it.next(io) catch null) |entry| {
+            if (entry.kind != .directory) continue;
+            printer.print("  {s}\n", .{entry.name});
+        }
+    }
 }
 
 fn cleanWorker(
@@ -66,7 +84,7 @@ fn cleanWorker(
     var path: std.ArrayList(u8) = .empty;
     defer path.deinit(gpa);
 
-    utils.removeUnwantedDirectories(io, gpa, dir, &path, targets, skips, printer) catch |err| {
+    utils.removeUnwantedDirectories(io, gpa, dir, &path, targets, skips, excluded_paths, printer) catch |err| {
         printer.print("Error: {s}\n", .{@errorName(err)});
         failed.* = true;
     };

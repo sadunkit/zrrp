@@ -63,7 +63,8 @@ pub const RemoveDirsError = Allocator.Error ||
 
 /// Walks `dir` recursively. Directories named in `targets` are deleted whole;
 /// directories named in `skips` are left for the other cleaning thread and not
-/// entered, so the two threads never touch the same subtree.
+/// entered, so the two threads never touch the same subtree. Directories whose
+/// path relative to the starting directory is in `excludes` are never entered.
 pub fn removeUnwantedDirectories(
     io: Io,
     gpa: Allocator,
@@ -71,6 +72,7 @@ pub fn removeUnwantedDirectories(
     path: *std.ArrayList(u8),
     targets: []const []const u8,
     skips: []const []const u8,
+    excludes: []const []const u8,
     printer: *Printer,
 ) RemoveDirsError!void {
     var it = dir.iterate();
@@ -87,6 +89,13 @@ pub fn removeUnwantedDirectories(
         } else if (nameIn(skips, entry.name)) {
             continue;
         } else {
+            const old_len = path.items.len;
+            defer path.shrinkRetainingCapacity(old_len);
+            if (path.items.len > 0) try path.append(gpa, std.fs.path.sep);
+            try path.appendSlice(gpa, entry.name);
+
+            if (pathIn(excludes, path.items)) continue;
+
             var sub_dir = dir.openDir(io, entry.name, .{
                 .iterate = true,
                 .follow_symlinks = false,
@@ -96,14 +105,33 @@ pub fn removeUnwantedDirectories(
             };
             defer sub_dir.close(io);
 
-            const old_len = path.items.len;
-            defer path.shrinkRetainingCapacity(old_len);
-            if (path.items.len > 0) try path.append(gpa, std.fs.path.sep);
-            try path.appendSlice(gpa, entry.name);
-
-            try removeUnwantedDirectories(io, gpa, sub_dir, path, targets, skips, printer);
+            try removeUnwantedDirectories(io, gpa, sub_dir, path, targets, skips, excludes, printer);
         }
     }
+}
+
+/// Compares relative paths, treating '/' and '\' as the same separator.
+fn pathIn(list: []const []const u8, path: []const u8) bool {
+    for (list) |item| {
+        if (item.len != path.len) continue;
+        for (item, path) |a, b| {
+            if (a != b and !(isSep(a) and isSep(b))) break;
+        } else return true;
+    }
+    return false;
+}
+
+fn isSep(c: u8) bool {
+    return c == '/' or c == '\\';
+}
+
+test pathIn {
+    const excludes: []const []const u8 = &.{"Plugins/Marketplace"};
+    try std.testing.expect(pathIn(excludes, "Plugins/Marketplace"));
+    try std.testing.expect(pathIn(excludes, "Plugins\\Marketplace"));
+    try std.testing.expect(!pathIn(excludes, "Plugins"));
+    try std.testing.expect(!pathIn(excludes, "Plugins/MarketplaceOld"));
+    try std.testing.expect(!pathIn(excludes, "Other/Plugins/Marketplace"));
 }
 
 /// Entries starting with '.' also match as a name suffix, so ".xcworkspace"

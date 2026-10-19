@@ -13,6 +13,10 @@ Commands:
 `clean` recursively deletes those directories from the current directory down. If no
 `.uproject` file is found it prompts before doing anything.
 
+`Plugins/Marketplace` (relative to the current directory) is never entered: Marketplace
+plugins ship prebuilt binaries that a local build won't regenerate. After a successful
+clean, the plugins found there are listed as not touched.
+
 ## Install
 
 ### Windows

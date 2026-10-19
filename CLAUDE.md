@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`zrrp` is a small Zig CLI for Unreal Engine developers. Its subcommands operate on the current working directory. Currently implemented: `clean`, which recursively removes Unreal build artifact directories (`Saved`, `Intermediate`, `Binaries`, `DerivedDataCache`, `.idea`, `.vs`, and `*.xcworkspace`), prompting first if no `.uproject` file is found. The project is a rewrite of an earlier Rust version (see git history); the remaining Rust subcommands (`clean-ddc`, `nuke`, `pua`, `p4-info`) have not been ported yet.
+`zrrp` is a small Zig CLI for Unreal Engine developers. Its subcommands operate on the current working directory. Currently implemented: `clean`, which recursively removes Unreal build artifact directories (`Saved`, `Intermediate`, `Binaries`, `DerivedDataCache`, `.idea`, `.vs`, and `*.xcworkspace`), prompting first if no `.uproject` file is found. It never enters `Plugins/Marketplace` (Marketplace plugins ship prebuilt binaries that a local build won't regenerate) and lists the plugins there as untouched after a successful clean. The project is a rewrite of an earlier Rust version (see git history); the remaining Rust subcommands (`clean-ddc`, `nuke`, `pua`, `p4-info`) have not been ported yet.
 
 ## Commands
 
@@ -24,8 +24,8 @@ Users install by copying `zig-out/bin/zrrp` onto their PATH (`~/bin` on Mac, an 
 
 - `src/main.zig` — executable entry point; parses argv by hand and dispatches to the `zrrp` module. Add new subcommands here.
 - `src/root.zig` — module root; re-exports `unreal` and `utils` and references them for tests.
-- `src/unreal.zig` — the `clean` command. Runs two threads: one deletes only `Intermediate` directories, the other handles the rest; each skips the other's targets so their subtrees never overlap.
-- `src/utils.zig` — recursive directory removal (`removeUnwantedDirectories`), the y/n prompt, and a mutex-guarded `Printer` that serializes output from the cleaning threads. Target-list entries starting with `.` also match as name suffixes (so `.xcworkspace` matches `MyProject (Mac).xcworkspace`).
+- `src/unreal.zig` — the `clean` command. Runs two threads: one deletes only `Intermediate` directories, the other handles the rest; each skips the other's targets so their subtrees never overlap. `excluded_paths` holds paths relative to the project root that neither thread enters; `reportExcluded` lists their subdirectories after success.
+- `src/utils.zig` — recursive directory removal (`removeUnwantedDirectories`), the y/n prompt, and a mutex-guarded `Printer` that serializes output from the cleaning threads. Target-list entries starting with `.` also match as name suffixes (so `.xcworkspace` matches `MyProject (Mac).xcworkspace`). Exclusions are matched by `pathIn` against the full relative path, treating `/` and `\` alike.
 
 ## CI and releases
 
